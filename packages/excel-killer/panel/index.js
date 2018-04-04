@@ -312,8 +312,8 @@ Editor.Panel.extend({
                     }
                 },
                 _getJavaScriptSaveData(excelData, itemSheet) {
-                    let title = excelData[0];
-                    let desc = excelData[1];
+                    let title = excelData[1];
+                    let desc = excelData[0];
                     let sheetFormatData = {};
                     for (let i = 2; i < excelData.length; i++) {
                         let lineData = excelData[i];
@@ -344,8 +344,8 @@ Editor.Panel.extend({
                     return sheetFormatData;
                 },
                 _getJsonSaveData(excelData, itemSheet) {
-                    let title = excelData[0];
-                    let desc = excelData[1];
+                    let title = excelData[1];
+                    let desc = excelData[0];
                     let ret = null;
                     let useFormat1 = false;
                     if (useFormat1) {
