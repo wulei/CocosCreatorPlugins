@@ -7,6 +7,11 @@ let lameJs = Editor.require('packages://' + packageName + '/node_modules/lamejs'
 let co = Editor.require('packages://' + packageName + '/node_modules/co');
 let child_process = require('child_process');
 let mp3item = Editor.require('packages://' + packageName + '/panel/item/mp3item.js');
+let image_item = Editor.require('packages://' + packageName + '/panel/item/image-item.js');
+let imageMin = Editor.require('packages://' + packageName + '/node_modules/imagemin');
+let imageminPngquant = Editor.require('packages://' + packageName + '/node_modules/imagemin-pngquant');
+let imageminJpegtran = Editor.require('packages://' + packageName + '/node_modules/imagemin-jpegtran');
+
 
 // 同步执行exec
 child_process.execPromise = function (cmd, options, callback) {
@@ -23,7 +28,19 @@ child_process.execPromise = function (cmd, options, callback) {
         })
     });
 };
-
+let importPromise = function (path, url, isShowProcess, callBack) {
+    return new Promise(function (resolve, reject) {
+        Editor.assetdb.import(path, url, isShowProcess, function (err, results) {
+            if (err) {
+                console.log(err);
+                reject(err);
+            }
+            callBack && callBack(results);
+            resolve();
+            return results;
+        })
+    });
+};
 Editor.Panel.extend({
 
     style: fs.readFileSync(Editor.url('packages://' + packageName + '/panel/index.css', 'utf8')) + "",
@@ -43,11 +60,12 @@ Editor.Panel.extend({
             }, 10);
         };
         mp3item.init();
+        image_item.init();
         window.plugin = new window.Vue({
             el: this.shadowRoot,
             created() {
                 this._getLamePath();
-                this.onBtnClickGetProjectMusic();
+                this.onBtnClickGetProject();
             },
             init() {
             },
@@ -59,6 +77,7 @@ Editor.Panel.extend({
                 mp3Array: [
                     {uuid: "88a33018-0323-4c25-9b0c-c54f147f5dd8"},
                 ],
+                imageArray: [],
             },
             methods: {
                 _addLog(str) {
@@ -67,26 +86,73 @@ Editor.Panel.extend({
                     this.logView += "[" + time.toLocaleString() + "]: " + str + "\n";
                     logListScrollToBottom();
                 },
-                onBtnClickCompressAll() {
+                onBtnClickCompressAllMusic() {
                     console.log("压缩整个项目音频文件");
                     this._compressMp3(this.mp3Array);
                 },
+                onBtnClickCompressAllImage() {
+                    console.log("压缩整个项目图片文件");
+                    this._compressImage(this.imageArray);
+                },
                 // 检索项目中的声音文件mp3类型
-                onBtnClickGetProjectMusic() {
+                onBtnClickGetProject(event) {
+                    if (event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
                     this.mp3Array = [];
-                    Editor.assetdb.queryAssets('db://assets/**\/*', 'audio-clip', function (err, results) {
+                    Editor.assetdb.queryAssets('db://assets/**\/*', ['audio-clip', 'texture'], function (err, results) {
                         results.forEach(function (result) {
                             let ext = path.extname(result.path);
                             if (ext === '.mp3') {
                                 this.mp3Array.push(result);
+                            } else if (ext === '.png' || ext === '.jpg') {
+                                this.imageArray.push(result);
                             }
                         }.bind(this));
                     }.bind(this));
                 },
-                onItemCompress(data) {
-                    console.log("onItemCompress");
+                onMusicItemCompress(data) {
                     // 进行压缩
+                    console.log("音频压缩");
                     this._compressMp3([data]);
+                },
+                onImageItemCompress(data) {
+                    console.log("图片压缩");
+                    this._compressImage([data]);
+                },
+                _compressImage(dataArr) {
+                    let tmp = this._getTempMp3Dir();
+                    co(function* () {
+                        for (let i = 0; i < dataArr.length; i++) {
+                            let data = dataArr[i];
+                            // todo 对于图片格式的判断
+                            let files = yield imageMin([data.path], tmp, {
+                                plugins: [
+                                    imageminJpegtran(),
+                                    imageminPngquant({quality: '65-80'})
+                                ]
+                            });
+                            this._addLog("压缩成功:" + data.url);
+                            // 导入到项目原位置
+                            let newNamePath = files[0].path;
+                            let name = path.basename(newNamePath);
+                            let url = data.url.substr(0, data.url.length - name.length - 1);
+
+                            yield importPromise([newNamePath], url, true, function (results) {
+                                results.forEach(function (result) {
+                                    if (result.type === "texture") {
+                                        console.log("del: " + result.path);
+                                        if (fs.existsSync(newNamePath)) {
+                                            fs.unlinkSync(newNamePath);// 删除临时文件
+                                        }
+                                    }
+                                });
+                            }.bind(this));
+
+                        }
+                    }.bind(this));
+                    this._addLog("压缩完毕!");
                 },
                 _getLamePath() {
                     let lamePath = null;
@@ -99,7 +165,7 @@ Editor.Panel.extend({
                         lamePath = path.join(lameBasePath, 'lame');
                         let cmd = "chmod u+x " + lamePath;
                         child_process.exec(cmd, null, function (err) {
-                            if(err){
+                            if (err) {
                                 console.log(err);
                             }
                             //console.log("添加执行权限成功");
@@ -158,16 +224,17 @@ Editor.Panel.extend({
                                 let url = voiceFileUrl.substr(0, voiceFileUrl.length - fullFileName.length - 1);
 
                                 // 导入到项目原位置
-                                Editor.assetdb.import([newNamePath], url,
-                                    function (err, results) {
-                                        console.log("11111111111111111");
+                                yield  importPromise([newNamePath], url, true,
+                                    function (results) {
                                         results.forEach(function (result) {
-                                            console.log(result.path);
-                                            // result.uuid
-                                            // result.parentUuid
-                                            // result.url
-                                            // result.path
-                                            // result.type
+                                            //   删除临时目录的文件
+                                            // console.log("type: " + result.type);
+                                            if (result.type = "audio-clip") {
+                                                console.log("del: " + result.path);
+                                                if (fs.existsSync(newNamePath)) {
+                                                    fs.unlinkSync(newNamePath);// 删除临时文件
+                                                }
+                                            }
                                         });
                                     }.bind(this));
 
@@ -175,19 +242,12 @@ Editor.Panel.extend({
                                 console.log("不支持的文件类型:" + voiceFile);
                             }
                         }
-                        // TODO 删除临时目录的文件
-                        // let dir = this._getTempMp3Dir();// 临时目录
-                        // if (fs.existsSync(dir)) {
-                        //     fs.unlinkSync(dir);// 删除临时文件
-                        // }
                         this._addLog("处理完毕!");
                     }.bind(this));
-
                 },
 
                 onBtnCompress() {
-
-
+                    console.log("test");
                 },
                 dropFile(event) {
                     event.preventDefault();
@@ -223,7 +283,7 @@ Editor.Panel.extend({
                 }
             }
             if (b) {
-                window.plugin.onBtnClickGetProjectMusic();
+                window.plugin.onBtnClickGetProject();
             } else {
                 console.log("未发现音频文件,无需刷新:");
             }
