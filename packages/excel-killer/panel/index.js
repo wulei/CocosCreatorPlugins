@@ -360,8 +360,8 @@ Editor.Panel.extend({
                     }
                 },
                 _getJavaScriptSaveData(excelData, itemSheet, isClient) {
-                    let title = excelData[0];
-                    let desc = excelData[1];
+                    let title = excelData[1];
+                    let desc = excelData[0];
                     let target = excelData[2];
                     let sheetFormatData = {};
                     for (let i = 3; i < excelData.length; i++) {
@@ -411,8 +411,8 @@ Editor.Panel.extend({
                     return sheetFormatData;
                 },
                 _getJsonSaveData(excelData, itemSheet, isClient) {
-                    let title = excelData[0];
-                    let desc = excelData[1];
+                    let title = excelData[1];
+                    let desc = excelData[0];
                     let target = excelData[2];
                     let ret = null;
                     let useFormat1 = false;
@@ -430,9 +430,9 @@ Editor.Panel.extend({
                             let canExport = false;
                             for (let j = 0; j < title.length; j++) {
                                 canExport = false;
-                                if (isClient && target[j].indexOf('c') !== -1) {
+                                if (isClient && target[j].toString().indexOf('c') !== -1) {
                                     canExport = true;
-                                } else if (!isClient && target[j].indexOf('s') !== -1) {
+                                } else if (!isClient && target[j].toString().indexOf('s') !== -1) {
                                     canExport = true;
                                 }
                                 if (canExport) {
@@ -471,9 +471,9 @@ Editor.Panel.extend({
                             let canExport = false;
                             for (let j = 1; j < title.length; j++) {
                                 canExport = false;
-                                if (isClient && target[j].indexOf('c') !== -1) {
+                                if (isClient && target[j].toString().indexOf('c') !== -1) {
                                     canExport = true;
-                                } else if (!isClient && target[j].indexOf('s') !== -1) {
+                                } else if (!isClient && target[j].toString().indexOf('s') !== -1) {
                                     canExport = true;
                                 }
                                 if (canExport) {
@@ -488,13 +488,13 @@ Editor.Panel.extend({
                             }
 
                             canExport = false;
-                            if (isClient && target[0].indexOf('c') !== -1) {
+                            if (isClient && target[0].toString().indexOf('c') !== -1) {
                                 canExport = true;
                             } else if (!isClient && target[0].indexOf('s') !== -1) {
                                 canExport = true;
                             }
                             if (canExport) {
-                                saveData2[lineData[0].toString()] = saveLineData;
+                                saveData2[lineData[0].toString().toString()] = saveLineData;
                             }
                         }
                         ret = saveData2;
