@@ -391,10 +391,10 @@ Editor.Panel.extend({
               continue;
             } else {
               if (lineData.length < title.length) {
-                this._addLog("[Error] 发现第" + i + "行缺少字段,跳过改行数据配置.");
+                this._addLog("[Error] 发现第" + i + "行缺少字段,跳过改行数据配置." + itemSheet.name + "*" + itemSheet.sheet);
                 continue;
               } else if (lineData.length > title.length) {
-                this._addLog("[Error] 发现第" + i + "行多余字段,跳过改行数据配置.");
+                this._addLog("[Error] 发现第" + i + "行多余字段,跳过改行数据配置." + itemSheet.name + "*" + itemSheet.sheet);
                 continue;
               }
             }
@@ -441,10 +441,10 @@ Editor.Panel.extend({
             for (let i = 3; i < excelData.length; i++) {
               let lineData = excelData[i];
               if (lineData.length < title.length) {
-                this._addLog("[Error] 发现第" + i + "行缺少字段,跳过改行数据配置.");
+                this._addLog("[Error] 发现第" + i + "行缺少字段,跳过改行数据配置." + itemSheet.name + "*" + itemSheet.sheet);
                 continue;
               } else if (lineData.length > title.length) {
-                this._addLog("[Error] 发现第" + i + "行多余字段,跳过改行数据配置.");
+                this._addLog("[Error] 发现第" + i + "行多余字段,跳过改行数据配置." + itemSheet.name + "*" + itemSheet.sheet);
                 continue;
               }
 
@@ -485,10 +485,10 @@ Editor.Panel.extend({
             for (let i = 3; i < excelData.length; i++) {
               let lineData = excelData[i];
               if (lineData.length < title.length) {
-                this._addLog("[Error] 发现第" + i + "行缺少字段,跳过改行数据配置.");
+                this._addLog("[Error] 发现第" + i + "行缺少字段,跳过改行数据配置." + itemSheet.name + "*" + itemSheet.sheet);
                 continue;
               } else if (lineData.length > title.length) {
-                this._addLog("[Error] 发现第" + i + "行多余字段,跳过改行数据配置.");
+                this._addLog("[Error] 发现第" + i + "行多余字段,跳过改行数据配置." + itemSheet.name + "*" + itemSheet.sheet);
                 continue;
               }
 
