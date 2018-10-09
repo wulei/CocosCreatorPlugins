@@ -77,6 +77,9 @@
                         <ui-checkbox class="flex-1" v-bind:checked="isExportJs" v-on:change="onBtnClickIsExportJs">
                             JavaScript配置
                         </ui-checkbox>
+                        <ui-checkbox class="flex-1" v-bind:checked="useZip" v-on:change="onBtnClickUseZip">
+                            zip配置
+                        </ui-checkbox>
                     </ui-prop>
                     <ui-prop name="导出目标" tooltip=" 客户端[c字段] * 服务器[s字段]">
                         <ui-checkbox class="flex-1" v-bind:checked="isExportClient"

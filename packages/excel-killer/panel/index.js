@@ -21,6 +21,7 @@ let jsonBeautifully = Editor.require(
 let chokidar = Editor.require(
   "packages://" + packageName + "/node_modules/chokidar"
 );
+let jsZip = Editor.require("packages://" + packageName + "/node_modules/jszip");
 const Globby = require("globby");
 
 let dirClientName = "client";
@@ -67,6 +68,7 @@ Editor.Panel.extend({
         isExportClient: false, // 是否导出客户端
         isExportServer: false, // 是否导出服务端
         isJsonAllCfgFileExist: false, // 是否单一配置文件存在
+        useZip: false, // 是否使用zip
         jsonSavePath: null, // json保存文件夹路径
         jsonAllCfgFileName: null, // json配置文件名
 
@@ -122,7 +124,12 @@ Editor.Panel.extend({
               this._addLog("配置目录不存在:" + clientDir);
               return;
             }
-            let pattern = path.join(clientDir, "**/*.json");
+            let pattern;
+            if (this.useZip) {
+              pattern = path.join(clientDir, "**/*.txt");
+            } else {
+              pattern = path.join(clientDir, "**/*.json");
+            }
             let files = Globby.sync(pattern);
             this._addLog("一共导入文件数量: " + files.length);
             for (let i = 0; i < files.length; i++) {}
@@ -172,7 +179,8 @@ Editor.Panel.extend({
             isExportJs: this.isExportJs,
             isExportClient: this.isExportClient,
             isExportServer: this.isExportServer,
-            importProjectCfgPath: this.importProjectCfgPath
+            importProjectCfgPath: this.importProjectCfgPath,
+            useZip: this.useZip
           };
           CfgUtil.saveCfgByData(data);
         },
@@ -224,6 +232,7 @@ Editor.Panel.extend({
                 this.isExportClient = data.isExportClient || false;
                 this.isExportServer = data.isExportServer || false;
                 this.importProjectCfgPath = data.importProjectCfgPath || null;
+                this.useZip = data.useZip || false;
                 this.checkJsFileExist();
                 this.checkJsonAllCfgFileExist();
               } else {
@@ -369,6 +378,10 @@ Editor.Panel.extend({
         },
         onBtnClickIsExportJs() {
           this.isExportJs = !this.isExportJs;
+          this._saveConfig();
+        },
+        onBtnClickUseZip() {
+          this.useZip = !this.useZip;
           this._saveConfig();
         },
         onBtnClickExportClient() {
@@ -731,7 +744,7 @@ Editor.Panel.extend({
           }
         },
         // 生成配置
-        onBtnClickGen() {
+        async onBtnClickGen() {
           console.log("onBtnClickGen");
           // 参数校验
           if (this.excelArray.length <= 0) {
@@ -938,14 +951,21 @@ Editor.Panel.extend({
                 jsonSavePath1,
                 this.jsonAllCfgFileName + ".json"
               );
-              this._onSaveJsonCfgFile(jsonAllSaveDataClient, saveFileFullPath);
+              await this._onSaveJsonCfgFile(
+                jsonAllSaveDataClient,
+                saveFileFullPath,
+                this.useZip
+              );
             }
             if (this.isExportServer) {
               let saveFileFullPath = path.join(
                 jsonSavePath2,
                 this.jsonAllCfgFileName + ".json"
               );
-              this._onSaveJsonCfgFile(jsonAllSaveDataServer, saveFileFullPath);
+              await this._onSaveJsonCfgFile(
+                jsonAllSaveDataServer,
+                saveFileFullPath
+              );
             }
             this.checkJsonAllCfgFileExist();
           }
@@ -970,13 +990,29 @@ Editor.Panel.extend({
           this._addLog("全部转换完成!");
         },
         // 保存为json配置
-        _onSaveJsonCfgFile(data, saveFileFullPath) {
-          let str = JSON.stringify(data);
-          if (this.isFormatJson) {
-            str = jsonBeautifully(str);
-          }
-          fs.writeFileSync(saveFileFullPath, str);
-          this._addLog("[Json]:" + saveFileFullPath);
+        _onSaveJsonCfgFile(data, saveFileFullPath, useZip) {
+          return new Promise((resolve, reject) => {
+            let str = JSON.stringify(data);
+            if (this.isFormatJson) {
+              str = jsonBeautifully(str);
+            }
+            let isZip = useZip || this.useZip;
+            if (isZip) {
+              let zip = new jsZip();
+              zip.file(this.jsonAllCfgFileName, str);
+              zip
+                .generateAsync({ type: "uint8array", compression: "DEFLATE" })
+                .then(function(content) {
+                  fs.writeFileSync(
+                    saveFileFullPath + ".txt",
+                    new Buffer(content).toString("base64")
+                  );
+                });
+            } else {
+              fs.writeFileSync(saveFileFullPath, str);
+            }
+            this._addLog("[Json]:" + saveFileFullPath);
+          });
         },
         // 保存为js配置
         _onSaveJavaScriptCfgFile(saveFileFullPath, jsSaveData) {
