@@ -7,6 +7,7 @@ module.exports = {
     jsFileName: null,
     jsonAllFileName: null,
     isMergeJson: null,
+    isMergeExcelJson: null,
     isFormatJsCode: null,
     isFormatJson: null,
     isExportJson: null,
@@ -44,6 +45,7 @@ module.exports = {
     this.cfgData.jsFileName = data.jsFileName;
     this.cfgData.jsonAllFileName = data.jsonAllFileName;
     this.cfgData.isMergeJson = data.isMergeJson;
+    this.cfgData.isMergeExcelJson = data.isMergeExcelJson;
     this.cfgData.isMergeJavaScript = data.isMergeJavaScript;
     this.cfgData.isFormatJsCode = data.isFormatJsCode;
     this.cfgData.isFormatJson = data.isFormatJson;
