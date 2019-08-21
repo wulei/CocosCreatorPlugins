@@ -1,0 +1,24 @@
+{
+  "name": "font-slimming-tools",
+  "version": "0.0.1",
+  "description": "字体瘦身插件",
+  "author": "xu_yanfeng",
+  "main": "main.js",
+  "main-menu": {
+    "i18n:MAIN_MENU.package.title/font-slimming-tools": {
+      "message": "font-slimming-tools:open"
+    }
+  },
+  "panel": {
+    "main": "panel/index.js",
+    "type": "dockable",
+    "title": "font-slimming-tools",
+    "width": 740,
+    "min-width": 740,
+    "height": 580,
+    "min-height": 580
+  },
+  "dependencies": {
+    "font-carrier": "0.0.12"
+  }
+}
