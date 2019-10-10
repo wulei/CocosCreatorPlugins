@@ -1,7 +1,7 @@
-var path = require("path");
 var fs = require("fs");
 var walk = require("walk");
 var tinypng = require("./tinypng");
+var excel = require("./excel");
 
 function onBeforeBuildFinish(options, callback) {
   Editor.log("~~~~~~~~~~~~~~~~~cc-build~~~~~~~~~~~~~~~~");
@@ -12,6 +12,7 @@ function onBeforeBuildFinish(options, callback) {
   // var script = fs.readFileSync(mainJsPath, 'utf8'); // 读取构建好的 main.js
   // script += '\n' + 'window.myID = "01234567";'; // 添加一点脚本到
   // fs.writeFileSync(mainJsPath, script); // 保存 main.js
+
   var walker = walk.walk(options.dest, {
     followLinks: false
   });
@@ -48,12 +49,31 @@ function onBeforeBuildFinish(options, callback) {
   });
 }
 
+function onBeforeBuildEnd(options, callback) {
+  done = false;
+  callback();
+}
+
+function onBeforeBuildStart(options, callback) {
+  Editor.log("~~~~~~~~~~~~~~~~~cc-start~~~~~~~~~~~~~~~~");
+  Editor.log("Building " + options.platform + " to " + options.dest); // 你可以在控制台输出点什么
+  Editor.log(JSON.stringify(options));
+
+
+  excel(options.project+'/excel',options.project+'/assets/resources/json')
+  setTimeout(callback,5000)
+}
+
 module.exports = {
   load() {
     Editor.Builder.on("before-change-files", onBeforeBuildFinish);
+    Editor.Builder.on("build-finished", onBeforeBuildEnd);
+    Editor.Builder.on("build-start", onBeforeBuildStart);
   },
 
   unload() {
-    Editor.Builder.removeListener("before-change-files", onBeforeBuildFinish);
+    Editor.Builder.off("before-change-files", onBeforeBuildFinish);
+    Editor.Builder.off("build-finished", onBeforeBuildEnd);
+    Editor.Builder.off("build-start", onBeforeBuildStart);
   }
 };
