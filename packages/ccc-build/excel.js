@@ -1,26 +1,8 @@
 let packageName = "excel-killer";
 let fs = require("fire-fs");
 let path = require("fire-path");
-let CfgUtil = Editor.require("packages://" + packageName + "/core/CfgUtil.js");
-let excelItem = Editor.require(
-    "packages://" + packageName + "/panel/item/excelItem.js"
-);
-let nodeXlsx = Editor.require(
-    "packages://" + packageName + "/node_modules/node-xlsx"
-);
-let Electron = require("electron");
-let fsExtra = Editor.require(
-    "packages://" + packageName + "/node_modules/fs-extra"
-);
-let chokidar = Editor.require(
-    "packages://" + packageName + "/node_modules/chokidar"
-);
-let jsZip = Editor.require("packages://" + packageName + "/node_modules/jszip");
-const Globby = require("globby");
-
-let dirClientName = "client";
-let dirServerName = "server";
-
+let jsZip = require("jszip");
+let nodeXlsx = require("node-xlsx")
 
 module.exports = function (dir, dist) {
     Editor.log(dir)
@@ -29,23 +11,26 @@ module.exports = function (dir, dist) {
     let allFileArr = [];
     let excelFileArr = [];
 
-    let dirInfo = fs.readdirSync(dir);
-    for (let i = 0; i < dirInfo.length; i++) {
-        let item = dirInfo[i];
-        let itemFullPath = path.join(dir, item);
-        let info = fs.statSync(itemFullPath);
-        if (info.isDirectory()) {
-            readDirSync(itemFullPath);
-        } else if (info.isFile()) {
-            let headStr = item.substr(0, 2);
-            if (headStr === "~$") {
-                Editor.log("检索到excel产生的临时文件:" + itemFullPath);
-            } else {
-                allFileArr.push(itemFullPath);
+    function readDirSync(dirPath) {
+        let dirInfo = fs.readdirSync(dirPath);
+        for (let i = 0; i < dirInfo.length; i++) {
+            let item = dirInfo[i];
+            let itemFullPath = path.join(dirPath, item);
+            let info = fs.statSync(itemFullPath);
+            if (info.isDirectory()) {
+                readDirSync(itemFullPath);
+            } else if (info.isFile()) {
+                let headStr = item.substr(0, 2);
+                if (headStr === "~$") {
+                    console.log("检索到excel产生的临时文件:" + itemFullPath);
+                } else {
+                    allFileArr.push(itemFullPath);
+                }
             }
         }
     }
 
+    readDirSync(dir);
 
     // 过滤出来.xlsx的文件
     for (let k in allFileArr) {
