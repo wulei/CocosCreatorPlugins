@@ -156,7 +156,7 @@ module.exports = function (dir, dist) {
     }
     let saveFileFullPath = path.join(
         dist,
-        jsonAllCfgFileName + ".json"
+        jsonAllCfgFileName
     );
     _onSaveJsonCfgFile(jsonAllSaveDataClient, saveFileFullPath);
 }
