@@ -4,6 +4,8 @@ let path = require("fire-path");
 let jsZip = require("jszip");
 let nodeXlsx = require("node-xlsx")
 
+let jsonAllCfgFileName = "GameJsonCfg"
+
 module.exports = function (dir, dist) {
     Editor.log(dir)
     Editor.log(dist)
@@ -91,7 +93,6 @@ module.exports = function (dir, dist) {
     Editor.log(excelSheetArray)
     let excelArray = excelSheetArray
 
-    let jsonAllCfgFileName = "GameJsonCfg"
 
     let excels = {};
     let jsonAllSaveDataClient = {};
@@ -156,7 +157,7 @@ module.exports = function (dir, dist) {
     }
     let saveFileFullPath = path.join(
         dist,
-        jsonAllCfgFileName
+        jsonAllCfgFileName + ".json"
     );
     _onSaveJsonCfgFile(jsonAllSaveDataClient, saveFileFullPath);
 }
@@ -234,30 +235,29 @@ function _getJsonSaveData(excelData, itemSheet, isClient) {
         }
         ret = saveData2;
     }
-    return ret;
+    return ret
+}
+
+function _sleep(d) {
+    for (let t = Date.now(); Date.now() - t <= d;) ;
 }
 
 function _onSaveJsonCfgFile(data, saveFileFullPath) {
-    return new Promise((resolve, reject) => {
-        let str = JSON.stringify(data);
+    let str = JSON.stringify(data);
 
-        let zip = new jsZip();
-        zip.file(this.jsonAllCfgFileName, str);
-        zip.generateAsync({
-            type: "base64",
-            compression: "DEFLATE",
-            compressionOptions: {
-                level: 9 // 压缩等级1~9    1压缩速度最快，9最优压缩方式
-                // [使用一张图片测试之后1和9压缩的力度不大，相差100字节左右]
-            }
-        }).then(function (content) {
-            fs.writeFile(
-                saveFileFullPath + ".txt",
-                content
-                // new Buffer(content).toString("base64")
-            );
-            resolve()
-        });
-
-    });
+    let zip = new jsZip();
+    zip.file(jsonAllCfgFileName, str);
+    let content = zip.generate({
+        type: "base64",
+        compression: "DEFLATE",
+        compressionOptions: {
+            level: 9 // 压缩等级1~9    1压缩速度最快，9最优压缩方式
+            // [使用一张图片测试之后1和9压缩的力度不大，相差100字节左右]
+        }
+    })
+    fs.writeFileSync(
+        saveFileFullPath + ".txt",
+        content
+        // new Buffer(content).toString("base64")
+    );
 }

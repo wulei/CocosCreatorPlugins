@@ -64,7 +64,10 @@ function onBeforeBuildStart(options, callback) {
 }
 
 module.exports = {
+
     load() {
+        Editor.log("~~~~~~~~~~~~~~~~~cc-init~~~~~~~~~~~~~~~~", Editor.Project.path);
+        excel(Editor.Project.path + '/excel', Editor.Project.path + '/assets/resources/json')
         Editor.Builder.on("before-change-files", onBeforeBuildFinish);
         Editor.Builder.on("build-finished", onBeforeBuildEnd);
         Editor.Builder.on("build-start", onBeforeBuildStart);
